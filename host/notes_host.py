@@ -55,7 +55,7 @@ def run_applescript(script):
 
 def list_notes():
     jxa = """
-    const Notes = Application("Notes");
+    const Notes = Application("com.apple.Notes");
     const out = [];
     const folders = Notes.folders();
     for (const folder of folders) {
@@ -98,8 +98,7 @@ def append_to_note(note_id, title, url, comment):
     ObjC.import('AppKit');
     ObjC.import('Foundation');
 
-    // Grab modification date before paste
-    const Notes = Application("Notes");
+    const Notes = Application("com.apple.Notes");
     const note = Notes.notes.whose({{id: '{safe_id}'}})[0];
     const beforeDate = note.modificationDate().getTime();
 

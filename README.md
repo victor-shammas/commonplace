@@ -88,6 +88,14 @@ To debug, add logging to the bash wrapper at `~/.local/bin/notes_host`:
 echo "EXIT: $?" >> /tmp/notes_host_debug.log
 ```
 
+### "Application isn't running" (-600)
+
+This error can appear **even when Apple Notes is open**. It means JXA/osascript cannot resolve the Notes application. Two possible causes:
+
+1. **JXA name resolution failure** -- macOS updates can break `Application("Notes")` in JXA. The fix is to use the bundle identifier `Application("com.apple.Notes")` instead. This is already handled in the current version.
+
+2. **Missing Automation permission** -- macOS requires explicit permission for one app to control another via Apple Events. Check **System Settings > Privacy & Security > Automation** and ensure the relevant processes (`bash`, `python3`, or `Google Chrome`) have access to **Notes** and **System Events**. If Chrome isn't listed, run `tccutil reset AppleEvents com.google.Chrome` in Terminal, then restart Chrome — macOS will re-prompt for permission.
+
 ### Notes don't appear in the list
 
 Apple Notes may need a moment to sync. Try the refresh button in the popup. macOS may also prompt to allow `osascript` to access Notes the first time.
