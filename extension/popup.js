@@ -42,13 +42,27 @@ function sendNative(message) {
 
 // -- Init ------------------------------------------------------------------
 
-chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-  const tab = tabs[0];
-  pageTitle = tab.title || "";
-  pageUrl = tab.url || "";
-  els.title.textContent = pageTitle;
-  els.url.textContent = pageUrl;
-});
+const inIframe = window.parent !== window;
+
+if (inIframe) {
+  document.body.style.width = "auto";
+  window.addEventListener("message", (e) => {
+    if (e.data && e.data.type === "pageInfo") {
+      pageTitle = e.data.title;
+      pageUrl = e.data.url;
+      els.title.textContent = pageTitle;
+      els.url.textContent = pageUrl;
+    }
+  });
+} else {
+  chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+    const tab = tabs[0];
+    pageTitle = tab.title || "";
+    pageUrl = tab.url || "";
+    els.title.textContent = pageTitle;
+    els.url.textContent = pageUrl;
+  });
+}
 
 // Restore strip query preference
 chrome.storage.local.get("stripQuery", (r) => {
@@ -217,7 +231,13 @@ els.save.addEventListener("click", async () => {
       lastNoteId: noteId,
       lastFolder: els.folderSelect.value,
     });
-    setTimeout(() => window.close(), 800);
+    setTimeout(() => {
+      if (inIframe) {
+        window.parent.postMessage({ type: "close-panel" }, "*");
+      } else {
+        window.close();
+      }
+    }, 800);
   } catch (e) {
     setStatus(e.message, "err");
     els.save.disabled = false;

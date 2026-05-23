@@ -1,20 +1,28 @@
 {
   "manifest_version": 3,
   "name": "URL to Notes",
-  "version": "1.0",
+  "version": "1.1",
   "description": "Save the current page to an Apple Notes running log.",
-  "permissions": ["activeTab", "nativeMessaging", "storage"],
+  "permissions": ["activeTab", "nativeMessaging", "storage", "scripting"],
   "icons": {
     "16": "icon16.png",
     "48": "icon48.png",
     "128": "icon128.png"
   },
   "action": {
-    "default_popup": "popup.html",
     "default_icon": {
       "16": "icon16.png",
       "48": "icon48.png",
       "128": "icon128.png"
     }
-  }
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "web_accessible_resources": [
+    {
+      "resources": ["popup.html"],
+      "matches": ["<all_urls>"]
+    }
+  ]
 }
