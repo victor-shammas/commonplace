@@ -90,7 +90,8 @@ def append_to_note(note_id, title, url, comment):
     if comment:
         snippet += f"<div>[{html.escape(comment)}]</div>"
 
-    safe_snippet = snippet.replace("\\", "\\\\").replace("'", "\\'")
+    safe_snippet = (snippet.replace("\\", "\\\\").replace("'", "\\'")
+                     .replace("\n", "\\n").replace("\r", "\\r"))
     safe_id = note_id.replace("\\", "\\\\").replace("'", "\\'")
 
     jxa = f"""
