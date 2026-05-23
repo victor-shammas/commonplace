@@ -14,7 +14,6 @@ A Chrome extension that saves the current page's title, URL, and an optional com
 ### 2. Register the native host
 
 ```bash
-chmod +x install.sh
 ./install.sh <YOUR_EXTENSION_ID>
 ```
 
