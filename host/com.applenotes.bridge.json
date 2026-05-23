@@ -1,0 +1,9 @@
+{
+  "name": "com.applenotes.bridge",
+  "description": "Save to Apple Notes native messaging host",
+  "path": "/PLACEHOLDER/notes_host.py",
+  "type": "stdio",
+  "allowed_origins": [
+    "chrome-extension://PLACEHOLDER_EXTENSION_ID/"
+  ]
+}
