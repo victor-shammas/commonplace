@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256"><defs>
+  <linearGradient id="bg" x1="0" y1="22" x2="0" y2="238" gradientUnits="userSpaceOnUse">
+    <stop offset="0" stop-color="#4A3521"/><stop offset="1" stop-color="#1D140D"/>
+  </linearGradient>
+  <linearGradient id="gl" x1="0" y1="62" x2="0" y2="196" gradientUnits="userSpaceOnUse">
+    <stop offset="0" stop-color="#FFC86C"/><stop offset="1" stop-color="#EE8526"/>
+  </linearGradient>
+  <filter id="sh" x="-10%" y="-10%" width="120%" height="125%">
+    <feDropShadow dx="0" dy="2" stdDeviation="2.5" flood-color="#000" flood-opacity="0.28"/>
+  </filter>
+</defs><rect x="20" y="22" width="216" height="216" rx="50" fill="url(#bg)" filter="url(#sh)"/>
+<rect x="20.5" y="22.5" width="215" height="215" rx="49.5" fill="none" stroke="#fff" stroke-opacity="0.06"/>
+<path d="M78 64h74l30 30v76" fill="none" stroke="url(#gl)" stroke-linecap="round" stroke-linejoin="round" stroke-width="22"/>
+<path d="M78 64v120a10 10 0 0 0 10 10h44" fill="none" stroke="url(#gl)" stroke-linecap="round" stroke-linejoin="round" stroke-width="22"/>
+<path d="M104 104h34" fill="none" stroke="url(#gl)" stroke-linecap="round" stroke-linejoin="round" stroke-width="20"/>
+<g transform="translate(162 168) scale(3.5) translate(-12 -12)">
+  <g fill="none" stroke="#2A1E13" stroke-width="7.6" stroke-linecap="round">
+    <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+    <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></g>
+  <g fill="none" stroke="url(#gl)" stroke-linecap="round" stroke-linejoin="round" stroke-width="3.6">
+    <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+    <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></g></g></svg>

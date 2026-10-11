@@ -7,7 +7,7 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 HOST_DIR="$SCRIPT_DIR/host"
 HOST_SCRIPT_SRC="$HOST_DIR/notes_host.py"
-MANIFEST_NAME="com.applenotes.bridge.json"
+MANIFEST_NAME="com.victorshammas.commonplace.json"
 CHROME_NM_DIR="$HOME/Library/Application Support/Google/Chrome/NativeMessagingHosts"
 
 # Deploy location outside ~/Desktop to avoid macOS TCC sandbox restrictions.
@@ -48,8 +48,8 @@ chmod +x "$DEPLOY_WRAPPER"
 mkdir -p "$CHROME_NM_DIR"
 cat > "$CHROME_NM_DIR/$MANIFEST_NAME" <<EOF
 {
-  "name": "com.applenotes.bridge",
-  "description": "Save to Apple Notes native messaging host",
+  "name": "com.victorshammas.commonplace",
+  "description": "Commonplace native messaging host",
   "path": "$DEPLOY_WRAPPER",
   "type": "stdio",
   "allowed_origins": [

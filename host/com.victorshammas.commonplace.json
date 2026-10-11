@@ -1,6 +1,6 @@
 {
-  "name": "com.applenotes.bridge",
-  "description": "Save to Apple Notes native messaging host",
+  "name": "com.victorshammas.commonplace",
+  "description": "Commonplace native messaging host",
   "path": "/PLACEHOLDER/notes_host.py",
   "type": "stdio",
   "allowed_origins": [

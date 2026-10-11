@@ -1,6 +1,6 @@
-# URL to Notes
+# Commonplace
 
-A Chrome extension that saves the current page's title, URL, and an optional comment to any existing Apple Note. Uses Chrome's native messaging -- no server running, no open ports. The host script is spawned only when you click Save.
+A Chrome extension that keeps a commonplace book in Apple Notes: it saves the current page's title, URL, and an optional comment to any existing Apple Note. Uses Chrome's native messaging -- no server running, no open ports. The host script is spawned only when you click Save.
 
 ## Setup
 
@@ -30,8 +30,8 @@ Quit and reopen Chrome so it picks up the native host registration.
 
 1. Navigate to any page
 2. Click the extension icon
-3. Filter and select the target note (list is cached for 10 min; hit the refresh button to refresh)
-4. Optionally type a comment
+3. Select the target note (the list appears instantly from cache and refreshes from Notes in the background)
+4. Optionally type a comment -- text you selected on the page before clicking the icon is filled in for you
 5. Hit **Save**
 
 The entry appears in your note as a timestamped link with your comment.
@@ -57,11 +57,11 @@ No server, no daemon, no open port. The Python script runs only for the duration
 ```
 extension/
   manifest.json    Chrome extension manifest (MV3)
-  popup.html       Extension popup UI
+  popup.html       Popup UI
   popup.js         Popup logic, native messaging client
 host/
   notes_host.py    Native messaging host (source copy)
-  com.applenotes.bridge.json   Manifest template (not used at runtime)
+  com.victorshammas.commonplace.json   Manifest template (not used at runtime)
 install.sh         Deployment script
 ```
 
@@ -94,7 +94,11 @@ This error can appear **even when Apple Notes is open**. It means JXA/osascript 
 
 1. **JXA name resolution failure** -- macOS updates can break `Application("Notes")` in JXA. The fix is to use the bundle identifier `Application("com.apple.Notes")` instead. This is already handled in the current version.
 
-2. **Missing Automation permission** -- macOS requires explicit permission for one app to control another via Apple Events. Check **System Settings > Privacy & Security > Automation** and ensure the relevant processes (`bash`, `python3`, or `Google Chrome`) have access to **Notes** and **System Events**. If Chrome isn't listed, run `tccutil reset AppleEvents com.google.Chrome` in Terminal, then restart Chrome — macOS will re-prompt for permission.
+2. **Missing Automation permission** -- macOS requires explicit permission for one app to control another via Apple Events. Check **System Settings > Privacy & Security > Automation** and ensure **python3** has access to **Notes** and **System Events**. Chrome disclaims responsibility for native hosts, so the permission belongs to `/usr/bin/python3`, not Chrome.
+
+### "Commonplace needs Accessibility access"
+
+Saving pastes the entry into the note with a simulated ⌘V, which macOS only allows for apps with Accessibility permission. Allow **python3** in **System Settings > Privacy & Security > Accessibility**. (Chrome disclaims responsibility for native hosts it launches, so macOS attributes the permission to the host's interpreter, `/usr/bin/python3`, not to Chrome.) Your clipboard is restored after each save.
 
 ### Notes don't appear in the list
 

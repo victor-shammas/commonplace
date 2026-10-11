@@ -1,6 +1,5 @@
-const HOST_NAME = "com.applenotes.bridge";
+const HOST_NAME = "com.victorshammas.commonplace";
 const CACHE_KEY = "notesCache";
-const CACHE_MAX_AGE_MS = 10 * 60 * 1000; // 10 minutes
 
 let allNotes = [];
 let pageTitle = "";
@@ -42,26 +41,28 @@ function sendNative(message) {
 
 // -- Init ------------------------------------------------------------------
 
-const inIframe = window.parent !== window;
+chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+  const tab = tabs[0];
+  pageTitle = tab.title || "";
+  pageUrl = tab.url || "";
+  els.title.textContent = pageTitle;
+  els.url.textContent = pageUrl;
+  prefillSelection(tab.id);
+});
 
-if (inIframe) {
-  document.body.style.width = "auto";
-  window.addEventListener("message", (e) => {
-    if (e.data && e.data.type === "pageInfo") {
-      pageTitle = e.data.title;
-      pageUrl = e.data.url;
-      els.title.textContent = pageTitle;
-      els.url.textContent = pageUrl;
-    }
-  });
-} else {
-  chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-    const tab = tabs[0];
-    pageTitle = tab.title || "";
-    pageUrl = tab.url || "";
-    els.title.textContent = pageTitle;
-    els.url.textContent = pageUrl;
-  });
+// The popup closes when the page is clicked, so text can't be copied into it
+// while open. Instead, pre-fill the quick note with the page's selection.
+async function prefillSelection(tabId) {
+  try {
+    const [result] = await chrome.scripting.executeScript({
+      target: { tabId },
+      func: () => window.getSelection().toString(),
+    });
+    const selection = (result && result.result || "").trim();
+    if (selection && !els.comment.value) els.comment.value = selection;
+  } catch (_) {
+    // Pages like chrome:// and the Web Store can't be scripted
+  }
 }
 
 // Restore strip query preference
@@ -75,28 +76,40 @@ setTimeout(() => els.comment.focus(), 100);
 
 // -- Notes list with caching -----------------------------------------------
 
+// Show the cached list immediately, then always refresh it from Notes (~2s)
+// and rebuild the dropdowns without disturbing the current selection.
 async function loadNotes(forceRefresh) {
-  if (!forceRefresh) {
+  if (!forceRefresh && !allNotes.length) {
     const cached = await getCachedNotes();
     if (cached) {
       allNotes = cached;
       buildFolders();
-      return;
     }
   }
 
-  setStatus("Loading notes…", "loading");
-  els.folderSelect.innerHTML = '<option value="">Loading…</option>';
-  els.noteSelect.innerHTML = '<option value="">Loading…</option>';
+  if (!allNotes.length) {
+    setStatus("Loading notes…", "loading");
+    els.folderSelect.innerHTML = '<option value="">Loading…</option>';
+    els.noteSelect.innerHTML = '<option value="">Loading…</option>';
+  }
+  els.refresh.classList.add("busy");
 
   try {
     const response = await sendNative({ action: "list" });
-    allNotes = response.notes || [];
-    await setCachedNotes(allNotes);
-    buildFolders();
-    setStatus("");
+    const notes = response.notes || [];
+    await setCachedNotes(notes);
+    if (!allNotes.length || JSON.stringify(notes) !== JSON.stringify(allNotes)) {
+      const current = allNotes.length
+        ? { folder: els.folderSelect.value, noteId: els.noteSelect.value }
+        : null;
+      allNotes = notes;
+      buildFolders(current);
+    }
+    if (els.status.textContent === "Loading notes…") setStatus("");
   } catch (e) {
     setStatus("Error: " + e.message, "err");
+  } finally {
+    els.refresh.classList.remove("busy");
   }
 }
 
@@ -104,11 +117,7 @@ function getCachedNotes() {
   return new Promise((resolve) => {
     chrome.storage.local.get(CACHE_KEY, (result) => {
       const cache = result[CACHE_KEY];
-      if (cache && Date.now() - cache.timestamp < CACHE_MAX_AGE_MS) {
-        resolve(cache.notes);
-      } else {
-        resolve(null);
-      }
+      resolve(cache ? cache.notes : null);
     });
   });
 }
@@ -121,7 +130,7 @@ function setCachedNotes(notes) {
 
 // -- Build folder dropdown -------------------------------------------------
 
-function buildFolders() {
+function buildFolders(current) {
   // Group by folder, sort folders by most recent note (desc)
   const folderMap = {};
   for (const n of allNotes) {
@@ -144,14 +153,20 @@ function buildFolders() {
     els.folderSelect.appendChild(opt);
   }
 
-  // Restore last folder or pick first
-  chrome.storage.local.get(["lastFolder", "lastNoteId"], (r) => {
-    if (r.lastFolder) {
-      const match = [...els.folderSelect.options].find((o) => o.value === r.lastFolder);
-      if (match) match.selected = true;
-    }
-    buildNotes(r.lastNoteId);
-  });
+  // Keep the current selection on refresh; otherwise restore last folder or pick first
+  if (current) {
+    selectFolder(current.folder, current.noteId);
+  } else {
+    chrome.storage.local.get(["lastFolder", "lastNoteId"], (r) => selectFolder(r.lastFolder, r.lastNoteId));
+  }
+}
+
+function selectFolder(folder, noteId) {
+  if (folder) {
+    const match = [...els.folderSelect.options].find((o) => o.value === folder);
+    if (match) match.selected = true;
+  }
+  buildNotes(noteId);
 }
 
 // -- Build note list for selected folder -----------------------------------
@@ -231,13 +246,7 @@ els.save.addEventListener("click", async () => {
       lastNoteId: noteId,
       lastFolder: els.folderSelect.value,
     });
-    setTimeout(() => {
-      if (inIframe) {
-        window.parent.postMessage({ type: "close-panel" }, "*");
-      } else {
-        window.close();
-      }
-    }, 800);
+    setTimeout(() => window.close(), 800);
   } catch (e) {
     setStatus(e.message, "err");
     els.save.disabled = false;
