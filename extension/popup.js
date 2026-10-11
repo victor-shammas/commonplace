@@ -1,5 +1,9 @@
 const HOST_NAME = "com.victorshammas.commonplace";
 const CACHE_KEY = "notesCache";
+const SETUP_URL = "https://github.com/victor-shammas/commonplace#setup";
+const NATIVE_TIMEOUT_MS = 40 * 1000; // the host gives osascript 30s
+const MAX_SELECTION_CHARS = 5000;
+const TRACKING_PARAM = /^(utm_\w+|fbclid|gclid|dclid|gbraid|wbraid|msclkid|yclid|mc_cid|mc_eid|igshid|_hsenc|_hsmi|mkt_tok)$/i;
 
 let allNotes = [];
 let pageTitle = "";
@@ -15,6 +19,8 @@ const els = {
   save: document.getElementById("save"),
   status: document.getElementById("status"),
   refresh: document.getElementById("refresh"),
+  form: document.getElementById("form"),
+  setup: document.getElementById("setup"),
 };
 
 // -- Native messaging wrapper ----------------------------------------------
@@ -22,31 +28,64 @@ const els = {
 function sendNative(message) {
   return new Promise((resolve, reject) => {
     const port = chrome.runtime.connectNative(HOST_NAME);
+    let settled = false;
+    const settle = (fn, value) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      fn(value);
+    };
+    const timer = setTimeout(() => {
+      settle(reject, new Error("The Commonplace helper didn't respond. Try again."));
+      port.disconnect();
+    }, NATIVE_TIMEOUT_MS);
+
     port.onMessage.addListener((response) => {
       if (response && response.status === "error") {
-        reject(new Error(response.error));
+        settle(reject, new Error(response.error));
       } else {
-        resolve(response);
+        settle(resolve, response);
       }
       port.disconnect();
     });
     port.onDisconnect.addListener(() => {
-      if (chrome.runtime.lastError) {
-        reject(new Error(chrome.runtime.lastError.message));
-      }
+      const text = chrome.runtime.lastError
+        ? chrome.runtime.lastError.message
+        : "The Commonplace helper exited unexpectedly.";
+      const error = new Error(text);
+      // Host missing, or registered for a different extension ID
+      error.needsSetup = /not found|forbidden/i.test(text);
+      settle(reject, error);
     });
     port.postMessage(message);
   });
 }
 
+function showSetup() {
+  els.form.hidden = true;
+  els.setup.hidden = false;
+  document.getElementById("extId").textContent = chrome.runtime.id;
+  if (!/Mac/.test(navigator.userAgent)) {
+    document.getElementById("setupText").textContent =
+      "Commonplace saves pages to Apple Notes, so it works only on a Mac.";
+  }
+}
+
+document.getElementById("setupLink").addEventListener("click", () => {
+  chrome.tabs.create({ url: SETUP_URL });
+  window.close();
+});
+
 // -- Init ------------------------------------------------------------------
 
 chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
   const tab = tabs[0];
+  if (!tab) return;
   pageTitle = tab.title || "";
   pageUrl = tab.url || "";
   els.title.textContent = pageTitle;
   els.url.textContent = pageUrl;
+  updateSaveButton();
   prefillSelection(tab.id);
 });
 
@@ -58,7 +97,7 @@ async function prefillSelection(tabId) {
       target: { tabId },
       func: () => window.getSelection().toString(),
     });
-    const selection = (result && result.result || "").trim();
+    const selection = (result && result.result || "").trim().slice(0, MAX_SELECTION_CHARS);
     if (selection && !els.comment.value) els.comment.value = selection;
   } catch (_) {
     // Pages like chrome:// and the Web Store can't be scripted
@@ -107,7 +146,8 @@ async function loadNotes(forceRefresh) {
     }
     if (els.status.textContent === "Loading notes…") setStatus("");
   } catch (e) {
-    setStatus("Error: " + e.message, "err");
+    if (e.needsSetup) showSetup();
+    else setStatus("Error: " + e.message, "err");
   } finally {
     els.refresh.classList.remove("busy");
   }
@@ -224,14 +264,7 @@ els.save.addEventListener("click", async () => {
   els.save.disabled = true;
   setStatus("Saving…", "loading");
 
-  let url = pageUrl;
-  if (els.stripQuery.checked) {
-    try {
-      const u = new URL(url);
-      u.search = "";
-      url = u.toString();
-    } catch (_) {}
-  }
+  const url = els.stripQuery.checked ? stripTracking(pageUrl) : pageUrl;
 
   try {
     await sendNative({
@@ -248,22 +281,38 @@ els.save.addEventListener("click", async () => {
     });
     setTimeout(() => window.close(), 800);
   } catch (e) {
-    setStatus(e.message, "err");
+    if (e.needsSetup) showSetup();
+    else setStatus(e.message, "err");
     els.save.disabled = false;
   }
 });
 
-// Enter key saves (unless in the note select)
+// ⌘↩ saves from anywhere; plain ↩ saves too, except in the quick note (where it
+// adds a line break) and on the refresh button. Never while an IME is composing.
 document.addEventListener("keydown", (e) => {
-  if (e.key === "Enter" && !els.save.disabled) {
-    e.preventDefault();
-    els.save.click();
-  }
+  if (e.key !== "Enter" || e.isComposing || els.save.disabled) return;
+  const plain = !e.metaKey && !e.ctrlKey;
+  if (plain && (e.shiftKey || e.target === els.comment || e.target === els.refresh)) return;
+  e.preventDefault();
+  els.save.click();
 });
 // -- Helpers ---------------------------------------------------------------
 
 function updateSaveButton() {
-  els.save.disabled = !els.noteSelect.value;
+  els.save.disabled = !els.noteSelect.value || !pageUrl;
+}
+
+// Remove only known tracking parameters; other query strings (e.g. YouTube's ?v=) are content
+function stripTracking(url) {
+  try {
+    const u = new URL(url);
+    const tracking = [...u.searchParams.keys()].filter((k) => TRACKING_PARAM.test(k));
+    if (!tracking.length) return url;
+    for (const k of tracking) u.searchParams.delete(k);
+    return u.toString();
+  } catch (_) {
+    return url;
+  }
 }
 
 function setStatus(msg, cls) {

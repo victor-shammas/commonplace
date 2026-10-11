@@ -31,8 +31,10 @@ Quit and reopen Chrome so it picks up the native host registration.
 1. Navigate to any page
 2. Click the extension icon
 3. Select the target note (the list appears instantly from cache and refreshes from Notes in the background)
-4. Optionally type a comment -- text you selected on the page before clicking the icon is filled in for you
-5. Hit **Save**
+4. Optionally type a comment -- text you selected on the page before clicking the icon is filled in for you (Return adds a line break)
+5. Hit **Save**, or press ⌘↩
+
+The "Remove tracking parameters" option strips only known trackers (`utm_*`, `fbclid`, `gclid`, …), so links like YouTube's `?v=` keep working.
 
 The entry appears in your note as a timestamped link with your comment.
 
@@ -64,6 +66,10 @@ host/
   com.victorshammas.commonplace.json   Manifest template (not used at runtime)
 install.sh         Deployment script
 ```
+
+## Privacy
+
+Nothing leaves your Mac. See [PRIVACY.md](PRIVACY.md).
 
 ## Requirements
 

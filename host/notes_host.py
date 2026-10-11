@@ -7,6 +7,7 @@ and reads the JSON response from stdout (same framing). Process exits after.
 
 import html
 import json
+import re
 import struct
 import subprocess
 import sys
@@ -29,25 +30,20 @@ def send_message(obj):
     sys.stdout.buffer.flush()
 
 
+NOTE_ID_RE = re.compile(r"^x-coredata://[\w-]+/\w+/p\d+$")
+
+
 def run_jxa(script):
-    result = subprocess.run(
-        ["osascript", "-l", "JavaScript", "-e", script],
-        capture_output=True,
-        text=True,
-        timeout=30,
-    )
-    if result.returncode != 0:
-        raise RuntimeError(result.stderr.strip())
-    return result.stdout.strip()
-
-
-def run_applescript(script):
-    result = subprocess.run(
-        ["osascript", "-e", script],
-        capture_output=True,
-        text=True,
-        timeout=15,
-    )
+    try:
+        result = subprocess.run(
+            ["osascript", "-l", "JavaScript", "-e", script],
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+    except subprocess.TimeoutExpired:
+        raise RuntimeError("Notes didn't respond in time. If macOS is showing a permission "
+                           "prompt, answer it and try again.")
     if result.returncode != 0:
         raise RuntimeError(result.stderr.strip())
     return result.stdout.strip()
@@ -79,6 +75,9 @@ def list_notes():
 
 
 def append_to_note(note_id, title, url, comment):
+    if not NOTE_ID_RE.match(note_id):
+        raise RuntimeError("Invalid note ID.")
+    title = title or url
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M")
     link_html = f'<a href="{html.escape(url)}">{html.escape(title)}</a>'
     snippet = (
@@ -90,10 +89,6 @@ def append_to_note(note_id, title, url, comment):
     if comment:
         comment_html = html.escape(comment).replace("\r\n", "\n").replace("\n", "<br>")
         snippet += f"<div>[{comment_html}]</div>"
-
-    safe_snippet = (snippet.replace("\\", "\\\\").replace("'", "\\'")
-                     .replace("\n", "\\n").replace("\r", "\\r"))
-    safe_id = note_id.replace("\\", "\\\\").replace("'", "\\'")
 
     # Paste rather than rewriting note.body: Notes' scripting body getter drops
     # link hrefs and inline images, so a read-modify-write destroys earlier entries.
@@ -113,7 +108,9 @@ def append_to_note(note_id, title, url, comment):
     }}
 
     const Notes = Application("com.apple.Notes");
-    const note = Notes.notes.whose({{id: '{safe_id}'}})[0];
+    const matches = Notes.notes.whose({{id: {json.dumps(note_id)}}});
+    if (matches.length === 0) throw new Error('That note no longer exists. Refresh the list and pick another.');
+    const note = matches[0];
     const beforeDate = note.modificationDate().getTime();
     const ws = $.NSWorkspace.sharedWorkspace;
     const previousApp = ws.frontmostApplication.bundleIdentifier.js;
@@ -150,7 +147,7 @@ def append_to_note(note_id, title, url, comment):
     try {{
         // Put HTML on clipboard
         pb.clearContents;
-        const wrapper = '<meta charset="utf-8">' + '{safe_snippet}';
+        const wrapper = '<meta charset="utf-8">' + {json.dumps(snippet)};
         const htmlStr = $.NSString.stringWithString(wrapper);
         const htmlData = htmlStr.dataUsingEncoding($.NSUTF8StringEncoding);
         pb.setDataForType(htmlData, $.NSPasteboardTypeHTML);
@@ -180,9 +177,13 @@ def append_to_note(note_id, title, url, comment):
             }} catch (e) {{}}
             return false;
         }}, 3);
-        if (!shown) throw new Error('Notes did not open the selected note.');
+        if (!shown) throw new Error('Notes did not open the selected note. Is it locked?');
         editor.focused = true;
         sleep(0.2);
+        // Keystrokes go to whichever app is frontmost, so check again right before sending them
+        if (ws.frontmostApplication.bundleIdentifier.js !== 'com.apple.Notes') {{
+            throw new Error('Notes lost focus before pasting. Try again.');
+        }}
 
         // Cmd+Down to move to end, then paste
         se.keyCode(125, {{using: 'command down'}});
@@ -207,13 +208,15 @@ def append_to_note(note_id, title, url, comment):
 
 
 def explain_osascript_error(stderr):
-    if any(s in stderr for s in ("(1002)", "(-1719)", "assistive access", "not allowed to send keystrokes")):
+    # -1719 also means "invalid index", so match the Accessibility error by its text
+    if any(s in stderr for s in ("(1002)", "assistive access", "not allowed to send keystrokes")):
         return ("Commonplace needs Accessibility access to paste into Notes. Allow python3 in "
                 "System Settings › Privacy & Security › Accessibility, then try again.")
     if "(-1743)" in stderr:
         return ("Commonplace isn't allowed to control Notes or System Events. Allow python3 in "
                 "System Settings › Privacy & Security › Automation, then try again.")
-    return stderr
+    thrown = re.match(r"^execution error: (?:Error: )+(.*) \(-2700\)$", stderr, re.S)
+    return thrown.group(1) if thrown else stderr
 
 
 def main():

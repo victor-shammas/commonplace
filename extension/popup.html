@@ -1,5 +1,5 @@
 <!doctype html>
-<html>
+<html lang="en">
     <head>
         <meta charset="utf-8" />
         <style>
@@ -109,6 +109,12 @@
                 animation: spin 0.9s linear infinite;
                 border-color: transparent;
             }
+            @media (prefers-reduced-motion: reduce) {
+                .refresh-btn.busy {
+                    animation: none;
+                    opacity: 0.4;
+                }
+            }
             @keyframes spin {
                 to {
                     transform: rotate(360deg);
@@ -125,7 +131,8 @@
             .checkbox-row input {
                 margin: 0;
             }
-            button#save {
+            button#save,
+            button#setupLink {
                 width: 100%;
                 padding: 10px;
                 background: #0071e3;
@@ -137,7 +144,8 @@
                 cursor: pointer;
                 transition: background 0.15s;
             }
-            button#save:hover {
+            button#save:hover,
+            button#setupLink:hover {
                 background: #0077ed;
             }
             button#save:disabled {
@@ -159,43 +167,69 @@
             .status.loading {
                 color: #86868b;
             }
+            .kbd {
+                opacity: 0.7;
+                font-size: 12px;
+                margin-left: 6px;
+            }
+            .setup p {
+                line-height: 1.45;
+                margin-bottom: 12px;
+            }
+            .setup .muted {
+                color: #86868b;
+                font-size: 11px;
+                margin: 10px 0 0;
+                user-select: text;
+            }
         </style>
     </head>
     <body>
         <h1>Save to Apple Notes</h1>
 
-        <div class="page-info">
-            <div class="page-title" id="pageTitle">Loading…</div>
-            <div class="page-url" id="pageUrl"></div>
-        </div>
+        <section class="setup" id="setup" hidden>
+            <p id="setupText">
+                Commonplace needs a small helper app on your Mac to read and write Apple Notes. It isn't installed
+                yet, or it was set up for a different copy of the extension.
+            </p>
+            <button id="setupLink">Set up the helper</button>
+            <p class="muted">Extension ID: <span id="extId"></span></p>
+        </section>
 
-        <label>Folder</label>
-        <div class="row">
-            <select id="folderSelect">
-                <option value="">Loading…</option>
+        <main id="form">
+            <div class="page-info">
+                <div class="page-title" id="pageTitle">Loading…</div>
+                <div class="page-url" id="pageUrl"></div>
+            </div>
+
+            <label for="folderSelect">Folder</label>
+            <div class="row">
+                <select id="folderSelect">
+                    <option value="">Loading…</option>
+                </select>
+                <button class="refresh-btn" id="refresh" title="Refresh note list">↻</button>
+            </div>
+
+            <label for="noteSelect">Note</label>
+            <select id="noteSelect" disabled>
+                <option value="">Select a folder first</option>
             </select>
-            <button class="refresh-btn" id="refresh" title="Refresh note list">↻</button>
-        </div>
 
-        <label>Note</label>
-        <select id="noteSelect" disabled>
-            <option value="">Select a folder first</option>
-        </select>
+            <label for="comment">Quick note</label>
+            <textarea id="comment" placeholder="Add a few words about this page…"></textarea>
 
-        <label for="comment">Quick note</label>
-        <textarea id="comment" placeholder="Add a few words about this page…"></textarea>
+            <div class="checkbox-row">
+                <input type="checkbox" id="stripQuery" checked />
+                <label
+                    for="stripQuery"
+                    style="margin: 0; text-transform: none; font-size: 12px; color: #6e6e73; letter-spacing: 0"
+                    >Remove tracking parameters from link</label
+                >
+            </div>
 
-        <div class="checkbox-row">
-            <input type="checkbox" id="stripQuery" checked />
-            <label
-                for="stripQuery"
-                style="margin: 0; text-transform: none; font-size: 12px; color: #6e6e73; letter-spacing: 0"
-                >Strip URL query strings</label
-            >
-        </div>
-
-        <button id="save" disabled>Save to Notes</button>
-        <div class="status" id="status"></div>
+            <button id="save" disabled>Save to Notes<span class="kbd">⌘↩</span></button>
+            <div class="status" id="status" role="status" aria-live="polite"></div>
+        </main>
 
         <script src="popup.js"></script>
     </body>
