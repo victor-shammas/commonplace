@@ -1,6 +1,6 @@
 # Commonplace privacy policy
 
-_Last updated: October 11, 2026_
+_Effective October 11, 2026_
 
 Commonplace is a Chrome extension that saves the page you are viewing to a note in Apple Notes on your Mac. It does not collect, transmit or sell any personal data.
 
@@ -22,6 +22,14 @@ Commonplace makes no network requests. It has no analytics, tracking or advertis
 
 Uninstalling the extension deletes its local storage. Uninstalling the helper removes everything else Commonplace installed. The entries you saved stay in your notes until you delete them.
 
+## Chrome Web Store User Data Policy
+
+Commonplace's use of information complies with the Chrome Web Store User Data Policy, including the Limited Use requirements.
+
+## Changes
+
+If this policy changes, the updated version will be posted here and at [victorshammas.com/commonplace/privacy.html](https://victorshammas.com/commonplace/privacy.html) with a new effective date.
+
 ## Contact
 
-Questions about this policy: [victorshammas.com/contact](https://victorshammas.com/contact/).
+Questions about this policy: [contact+commonplace@victorshammas.com](mailto:contact+commonplace@victorshammas.com).

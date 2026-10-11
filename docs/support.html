@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Support · Commonplace</title>
+<meta name="description" content="Commonplace support: installing the extension and Commonplace Helper, macOS permissions, saving to Apple Notes, troubleshooting and FAQ.">
+<meta name="color-scheme" content="light dark">
+<link rel="icon" type="image/png" href="favicon.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="site-header">
+  <div class="wrap">
+    <a class="brand" href="./"><img src="icon.png" alt="" width="30" height="30">Commonplace</a>
+    <nav class="nav" aria-label="Main">
+      <a href="./" class="hide-sm">Home</a>
+      <a href="support.html" aria-current="page">Support</a>
+      <a href="privacy.html">Privacy</a>
+    </nav>
+  </div>
+</header>
+
+<main class="doc">
+  <div class="wrap narrow">
+    <h1>Support</h1>
+    <p>Something not working? The answers below cover almost everything. If not, email <a href="mailto:contact+commonplace@victorshammas.com?subject=Commonplace%20support">contact+commonplace@victorshammas.com</a>. I read every message.</p>
+    <ul class="toc">
+      <li><a href="#start">Getting started</a></li>
+      <li><a href="#permissions">Permissions</a></li>
+      <li><a href="#saving">Saving</a></li>
+      <li><a href="#trouble">Troubleshooting</a></li>
+      <li><a href="#data">Your data</a></li>
+      <li><a href="#contact">Contact</a></li>
+    </ul>
+
+    <h2 id="start">Getting started</h2>
+    <details open id="install">
+      <summary>How do I install Commonplace?</summary>
+      <p>Commonplace has two parts: the Chrome extension, and Commonplace Helper, a small Mac app that lets the extension reach Apple Notes.</p>
+      <ol>
+        <li><a href="https://github.com/victor-shammas/commonplace/releases/latest/download/CommonplaceHelper.dmg">Download Commonplace Helper</a>, open the disk image and drag <em>Commonplace Helper</em> to Applications.</li>
+        <li>Open Commonplace Helper and allow the items it lists (see <a href="#permissions">Permissions</a>). When all four have a green check, click <em>Done</em>.</li>
+        <li>Add Commonplace to Chrome from the Chrome Web Store. To keep it handy, click the puzzle-piece icon in Chrome's toolbar and pin Commonplace.</li>
+        <li>Quit and reopen Chrome, so it finds the helper.</li>
+      </ol>
+    </details>
+    <details>
+      <summary>What do I need?</summary>
+      <p>A Mac with macOS 13 or later and Apple Notes, and Google Chrome or another Chromium browser: Brave, Microsoft Edge, Arc, Vivaldi or Chromium. Commonplace Helper connects itself to every one of these it finds when you open it.</p>
+    </details>
+    <details>
+      <summary>Does it work on Windows, or on my iPhone?</summary>
+      <p>No. Commonplace needs Apple Notes on a Mac. The entries it saves are ordinary notes, though, so they sync to your iPhone and iPad like the rest of your notes.</p>
+    </details>
+    <details>
+      <summary>Is Commonplace free?</summary>
+      <p>Yes, and open source under the MIT license: <a href="https://github.com/victor-shammas/commonplace">github.com/victor-shammas/commonplace</a>. There are no ads and no account. If Commonplace is useful to you, consider <a href="https://buymeacoffee.com/victorshammas">buying me a coffee</a>.</p>
+    </details>
+
+    <h2 id="permissions">Permissions</h2>
+    <details open>
+      <summary>Why does Commonplace Helper need these permissions?</summary>
+      <ul>
+        <li><strong>Notes</strong> (Automation): to list your notes and folders, and open the note you pick.</li>
+        <li><strong>System Events</strong> (Automation) and <strong>Accessibility</strong>: to paste the entry at the end of the note. macOS only lets apps with Accessibility access send the paste keystroke.</li>
+      </ul>
+      <p>Commonplace pastes because Apple Notes' scripting interface loses links and images when a note's text is rewritten, and pasting keeps every earlier entry intact. Your clipboard is put back right after.</p>
+      <p>macOS asks about <em>Commonplace Helper</em>, not Chrome: Chrome doesn't take responsibility for the helpers it starts.</p>
+    </details>
+    <details id="denied">
+      <summary>I clicked “Don't Allow”. How do I fix it?</summary>
+      <p>macOS doesn't ask twice. Open <strong>System Settings › Privacy &amp; Security</strong>, then:</p>
+      <ul>
+        <li><strong>Automation</strong>: under Commonplace Helper, switch on Notes and System Events.</li>
+        <li><strong>Accessibility</strong>: switch on Commonplace Helper.</li>
+      </ul>
+      <p>Opening Commonplace Helper shows which items are still missing, with buttons that open the right settings. To start over, run <code>tccutil reset All com.victorshammas.commonplace.helper</code> in Terminal and open the helper again.</p>
+    </details>
+
+    <h2 id="saving">Saving</h2>
+    <details open>
+      <summary>What does an entry look like?</summary>
+      <p>Each save adds four lines to the end of the note: the page title as a link, the page address, the date and time, and your comment, if you wrote one, in square brackets. A blank line separates entries. It's ordinary note text, so you can edit, move or search it in Notes.</p>
+    </details>
+    <details>
+      <summary>Can I save a quote from the page?</summary>
+      <p>Yes. Select the text on the page first, then click Commonplace's icon: the selection is filled into the quick note. Return adds a line break; ⌘↩ saves.</p>
+    </details>
+    <details>
+      <summary>What does “Remove tracking parameters from link” do?</summary>
+      <p>It removes known tracking tags such as <code>utm_source</code>, <code>fbclid</code> and <code>gclid</code> from the saved address, and leaves everything else, so links like YouTube's <code>?v=</code> keep working. Untick it to save the address exactly as it is.</p>
+    </details>
+    <details>
+      <summary>Why does Notes come to the front when I save?</summary>
+      <p>The helper opens the note and pastes the entry at its end, then switches you back to your browser. It takes about a second.</p>
+    </details>
+    <details>
+      <summary>A note or folder is missing from the list</summary>
+      <p>The list shows straight away from the last time and then refreshes from Notes; click ↻ to refresh it yourself. Folders without notes, and Recently Deleted, aren't listed. Subfolders appear as “Parent / Child”.</p>
+    </details>
+
+    <h2 id="trouble">Troubleshooting</h2>
+    <details open>
+      <summary>The popup says “Get Commonplace Helper”</summary>
+      <p>Chrome can't find the helper. Install it (see <a href="#install">How do I install Commonplace?</a>), open it once so it connects to your browsers, then quit and reopen Chrome. If the popup says the helper needs updating, download the latest version and open it once.</p>
+    </details>
+    <details>
+      <summary>“Commonplace Helper needs Accessibility access” or “isn't allowed to control Notes”</summary>
+      <p>A permission is missing. See <a href="#denied">I clicked “Don't Allow”</a>.</p>
+    </details>
+    <details>
+      <summary>“Notes did not open the selected note. Is it locked?”</summary>
+      <p>Commonplace can't add to locked notes. Pick another note, or unlock it in Notes first.</p>
+    </details>
+    <details>
+      <summary>“Paste may have failed”</summary>
+      <p>Notes didn't register a change. Open Notes, check the note isn't in the middle of syncing or showing a dialog, and try again. Your clipboard is restored either way.</p>
+    </details>
+
+    <h2 id="data">Your data</h2>
+    <details open>
+      <summary>Where is my data stored?</summary>
+      <p>Entries go into your notes. The list of note names, your last-used note and your settings are kept in Chrome's local storage for the extension. Nothing leaves your Mac: Commonplace makes no network requests and has no server. See the <a href="privacy.html">privacy policy</a>.</p>
+    </details>
+    <details id="remove">
+      <summary>How do I remove Commonplace?</summary>
+      <ol>
+        <li>Remove the extension: right-click its toolbar icon and choose <em>Remove from Chrome</em>.</li>
+        <li>Drag <em>Commonplace Helper</em> from Applications to the Trash.</li>
+        <li>Optionally, remove its browser registrations and permissions in Terminal:<br>
+          <code>find ~/Library/Application\ Support -path '*NativeMessagingHosts/com.victorshammas.commonplace.json' -delete</code><br>
+          <code>tccutil reset All com.victorshammas.commonplace.helper</code></li>
+      </ol>
+      <p>The entries you saved stay in your notes until you delete them.</p>
+    </details>
+
+    <h2 id="contact">Contact</h2>
+    <p>Email <a href="mailto:contact+commonplace@victorshammas.com?subject=Commonplace%20support">contact+commonplace@victorshammas.com</a>. It helps to include your macOS version, your browser, and the exact message Commonplace showed. Please don't send the contents of your notes.</p>
+
+    <p class="fineprint" style="margin-top:32px">Commonplace is an independent extension and is not affiliated with, endorsed by or sponsored by Apple Inc.</p>
+  </div>
+</main>
+
+<section class="app-bar" aria-label="Apps by Victor Shammas">
+  <div class="wrap">
+    <div class="app-bar-head">
+      <p class="app-bar-title"><a href="https://victorshammas.com/apps/">Small, private apps by Victor Shammas</a></p>
+      <p class="app-bar-coffee">Enjoying one of these apps? <a href="https://buymeacoffee.com/victorshammas">Buy me a coffee</a>.</p>
+    </div>
+    <div class="app-tiles">
+      <a class="app-tile" href="https://victorshammas.com/plainview/"><img src="https://victorshammas.com/plainview/icon.png" alt="" width="44" height="44"><span><strong>Plainview</strong><small>A Markdown reader for the Mac</small></span></a>
+      <a class="app-tile" href="https://victorshammas.com/gaugeline/"><img src="https://victorshammas.com/gaugeline/icon.png" alt="" width="44" height="44"><span><strong>Gaugeline</strong><small>AI usage limits in your menu bar</small></span></a>
+      <a class="app-tile" href="https://victorshammas.com/quoth/"><img src="https://victorshammas.com/quoth/icon.png" alt="" width="44" height="44"><span><strong>Quoth</strong><small>Local voice transcription</small></span></a>
+      <a class="app-tile" href="https://victorshammas.com/staple/"><img src="https://victorshammas.com/staple/icon.png" alt="" width="44" height="44"><span><strong>Staple</strong><small>Substack, stapled together</small></span></a>
+      <a class="app-tile" href="https://victorshammas.com/claude-usage-meter/"><img src="https://victorshammas.com/claude-usage-meter/icon.png" alt="" width="44" height="44"><span><strong>Claude Usage Meter</strong><small>Claude limits, free and open source</small></span></a>
+      <a class="app-tile" href="https://victorshammas.com/lectern/"><img src="https://victorshammas.com/lectern/icon.png" alt="" width="44" height="44"><span><strong>Lectern</strong><small>A presenter view for HTML slides</small></span></a>
+      <a class="app-tile current" aria-current="page" href="https://victorshammas.com/commonplace/"><img src="https://victorshammas.com/commonplace/icon.png" alt="" width="44" height="44"><span><strong>Commonplace</strong><small>Save links to Apple Notes</small><em>You’re here</em></span></a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <nav aria-label="Footer"><a href="./">Home</a><a href="support.html">Support</a><a href="privacy.html">Privacy Policy</a><a href="mailto:contact+commonplace@victorshammas.com">Contact</a><a href="https://buymeacoffee.com/victorshammas">Buy me a coffee</a></nav>
+    <p>Apple Notes and Mac are trademarks of Apple Inc. Chrome and Chrome Web Store are trademarks of Google LLC. © 2026 Victor Shammas</p>
+  </div>
+</footer>
+</body>
+</html>
