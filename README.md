@@ -1,37 +1,30 @@
 # Commonplace
 
-A Chrome extension that keeps a commonplace book in Apple Notes: it saves the current page's title, URL, and an optional comment to any existing Apple Note. Uses Chrome's native messaging -- no server running, no open ports. The host script is spawned only when you click Save.
+A Chrome extension that keeps a commonplace book in Apple Notes. It saves the current page's title, URL, a timestamp and an optional comment to the end of any note you pick. It works through **Commonplace Helper**, a small signed Mac app that Chrome starts only while you save. There's no server, background process or open port.
 
 ## Setup
 
-### 1. Load the extension
+### 1. Install Commonplace Helper
 
-1. Open `chrome://extensions/`
-2. Enable **Developer mode** (top right)
-3. Click **Load unpacked** and select the `extension/` folder
-4. Copy the **extension ID** shown under the name
+Download `CommonplaceHelper.dmg` from the [latest release](https://github.com/victor-shammas/commonplace/releases/latest) and drag **Commonplace Helper** to Applications. Open it once. It connects itself to your browsers and walks you through three macOS permissions:
 
-### 2. Register the native host
+- **Notes**: to list your notes and open the one you pick
+- **System Events** and **Accessibility**: to paste the entry at the end of the note
 
-```bash
-./install.sh <YOUR_EXTENSION_ID>
-```
+### 2. Install the extension
 
-This does three things:
-- Copies `host/notes_host.py` to `~/.local/bin/` (required -- see Troubleshooting)
-- Creates a shell wrapper at `~/.local/bin/notes_host`
-- Writes a Chrome native messaging manifest pointing to the wrapper
+Install Commonplace from the Chrome Web Store, or load it unpacked (see Development).
 
 ### 3. Restart Chrome
 
-Quit and reopen Chrome so it picks up the native host registration.
+Quit and reopen Chrome so it picks up the helper.
 
 ## Usage
 
 1. Navigate to any page
 2. Click the extension icon
 3. Select the target note (the list appears instantly from cache and refreshes from Notes in the background)
-4. Optionally type a comment -- text you selected on the page before clicking the icon is filled in for you (Return adds a line break)
+4. Optionally type a comment. Text you selected on the page before clicking the icon is filled in for you (Return adds a line break)
 5. Hit **Save**, or press ⌘↩
 
 The "Remove tracking parameters" option strips only known trackers (`utm_*`, `fbclid`, `gclid`, …), so links like YouTube's `?v=` keep working.
@@ -41,30 +34,45 @@ The entry appears in your note as a timestamped link with your comment.
 ## How it works
 
 ```
-popup.js  ->  chrome.runtime.connectNative
+popup.js  ->  chrome.runtime.connectNative("com.victorshammas.commonplace")
                     |
-              Chrome spawns ~/.local/bin/notes_host (bash wrapper)
+              Chrome starts Commonplace Helper (one request, then it exits)
                     |
-              notes_host.py (stdin/stdout JSON, native messaging protocol)
-                    |
-              osascript (JXA to list notes / clipboard+paste to append)
+              osascript (JXA: list notes / paste the entry at the end of the note)
                     |
               Apple Notes
 ```
 
-No server, no daemon, no open port. The Python script runs only for the duration of each request.
+Entries are pasted rather than written into the note's HTML, because Notes' scripting interface drops links and images when a note's body is rewritten. Your clipboard is restored after each save.
 
-## Project structure
+## Development
 
 ```
-extension/
-  manifest.json    Chrome extension manifest (MV3)
-  popup.html       Popup UI
-  popup.js         Popup logic, native messaging client
-host/
-  notes_host.py    Native messaging host (source copy)
-  com.victorshammas.commonplace.json   Manifest template (not used at runtime)
-install.sh         Deployment script
+extension/                 Chrome extension (MV3)
+  manifest.json
+  popup.html, popup.js     Popup UI and native messaging client
+helper/                    Commonplace Helper (Swift package)
+  Sources/main.swift       Chooses native-host mode or the setup window
+  Sources/NativeHost.swift Native messaging protocol and actions
+  Sources/Scripts.swift    JXA run through osascript
+  Sources/Registration.swift  Native host manifests for each browser
+  Sources/SetupWindow.swift   Permissions setup UI
+  build.sh                 Universal build, signing, DMG (--notarize to notarize)
+install.sh                 Development install to /Applications
+assets/                    Icon sources
+```
+
+1. In `chrome://extensions/`, enable **Developer mode**, click **Load unpacked** and select `extension/`.
+2. Make sure the extension ID is listed in `helper/Sources/Registration.swift` (`extensionIDs`).
+3. Run `./install.sh`. It builds and signs the helper, copies it to `/Applications` and registers it with every installed Chromium browser.
+4. Open Commonplace Helper once to grant permissions, then restart Chrome.
+
+After editing the helper, re-run `./install.sh`. After editing the extension, reload it in `chrome://extensions/`.
+
+To test the helper without Chrome, send it a framed message (4-byte length + JSON) with the extension origin as the argument:
+
+```bash
+"/Applications/Commonplace Helper.app/Contents/MacOS/CommonplaceHelper" "chrome-extension://<id>/"
 ```
 
 ## Privacy
@@ -73,43 +81,21 @@ Nothing leaves your Mac. See [PRIVACY.md](PRIVACY.md).
 
 ## Requirements
 
-- macOS (Apple Notes + osascript)
-- Python 3 (ships with macOS)
-- Chrome or Chromium-based browser
+- macOS 13 or later, with Apple Notes
+- Google Chrome, or another Chromium browser (Brave, Edge, Arc, Vivaldi, Chromium)
 
 ## Troubleshooting
 
-### "Failed to start native messaging host"
+### The popup says to get Commonplace Helper
 
-The shebang in `notes_host.py` may point to a Python path that doesn't exist. The install script uses a bash wrapper to avoid this -- re-run `install.sh` with your extension ID.
+The helper isn't installed, or was registered for a different copy of the extension. Install it, open it once, and restart Chrome.
 
-### "Native host has exited"
+### "Commonplace Helper needs Accessibility access" or "isn't allowed to control Notes"
 
-Most common cause: **macOS TCC sandbox restrictions**. Chrome-spawned processes cannot read files in protected directories (`~/Desktop`, `~/Documents`, `~/Downloads`). The `install.sh` script copies the host to `~/.local/bin/` to avoid this. If you moved the project or edited the source, re-run `install.sh`.
+Open Commonplace Helper and allow the items it lists. If you denied a prompt earlier, macOS won't ask again. Switch Commonplace Helper on in **System Settings > Privacy & Security > Automation** (Notes, System Events) or **Accessibility**. To start over, run `tccutil reset All com.victorshammas.commonplace.helper`.
 
-To debug, add logging to the bash wrapper at `~/.local/bin/notes_host`:
-```bash
-#!/bin/bash
-/usr/bin/python3 "$HOME/.local/bin/notes_host.py" "$@" 2>> /tmp/notes_host_debug.log
-echo "EXIT: $?" >> /tmp/notes_host_debug.log
-```
-
-### "Application isn't running" (-600)
-
-This error can appear **even when Apple Notes is open**. It means JXA/osascript cannot resolve the Notes application. Two possible causes:
-
-1. **JXA name resolution failure** -- macOS updates can break `Application("Notes")` in JXA. The fix is to use the bundle identifier `Application("com.apple.Notes")` instead. This is already handled in the current version.
-
-2. **Missing Automation permission** -- macOS requires explicit permission for one app to control another via Apple Events. Check **System Settings > Privacy & Security > Automation** and ensure **python3** has access to **Notes** and **System Events**. Chrome disclaims responsibility for native hosts, so the permission belongs to `/usr/bin/python3`, not Chrome.
-
-### "Commonplace needs Accessibility access"
-
-Saving pastes the entry into the note with a simulated ⌘V, which macOS only allows for apps with Accessibility permission. Allow **python3** in **System Settings > Privacy & Security > Accessibility**. (Chrome disclaims responsibility for native hosts it launches, so macOS attributes the permission to the host's interpreter, `/usr/bin/python3`, not to Chrome.) Your clipboard is restored after each save.
+Chrome doesn't take responsibility for the helpers it starts, so macOS asks about Commonplace Helper itself, not Chrome.
 
 ### Notes don't appear in the list
 
-Apple Notes may need a moment to sync. Try the refresh button in the popup. macOS may also prompt to allow `osascript` to access Notes the first time.
-
-### After editing `notes_host.py`
-
-Re-run `install.sh` to re-deploy the updated script to `~/.local/bin/`. The source copy in `host/` is not used at runtime.
+Apple Notes may need a moment to sync. Try the refresh button in the popup.

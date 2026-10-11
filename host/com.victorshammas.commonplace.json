@@ -1,9 +1,0 @@
-{
-  "name": "com.victorshammas.commonplace",
-  "description": "Commonplace native messaging host",
-  "path": "/PLACEHOLDER/notes_host.py",
-  "type": "stdio",
-  "allowed_origins": [
-    "chrome-extension://PLACEHOLDER_EXTENSION_ID/"
-  ]
-}

@@ -1,11 +1,13 @@
 const HOST_NAME = "com.victorshammas.commonplace";
-const CACHE_KEY = "notesCache";
+const CACHE_KEY = "notesCache2"; // compact list format from helper protocol 2
+const REQUIRED_PROTOCOL = 2;
 const SETUP_URL = "https://github.com/victor-shammas/commonplace#setup";
 const NATIVE_TIMEOUT_MS = 40 * 1000; // the host gives osascript 30s
 const MAX_SELECTION_CHARS = 5000;
 const TRACKING_PARAM = /^(utm_\w+|fbclid|gclid|dclid|gbraid|wbraid|msclkid|yclid|mc_cid|mc_eid|igshid|_hsenc|_hsmi|mkt_tok)$/i;
 
-let allNotes = [];
+let library = { folders: [], notes: [] };
+let libraryJSON = "";
 let pageTitle = "";
 let pageUrl = "";
 
@@ -41,7 +43,11 @@ function sendNative(message) {
     }, NATIVE_TIMEOUT_MS);
 
     port.onMessage.addListener((response) => {
-      if (response && response.status === "error") {
+      if (!response || (response.protocol || 0) < REQUIRED_PROTOCOL) {
+        const error = new Error("Commonplace Helper needs to be updated.");
+        error.needsSetup = error.outdated = true;
+        settle(reject, error);
+      } else if (response.status === "error") {
         settle(reject, new Error(response.error));
       } else {
         settle(resolve, response);
@@ -61,13 +67,15 @@ function sendNative(message) {
   });
 }
 
-function showSetup() {
+function showSetup(outdated) {
   els.form.hidden = true;
   els.setup.hidden = false;
   document.getElementById("extId").textContent = chrome.runtime.id;
+  const text = document.getElementById("setupText");
   if (!/Mac/.test(navigator.userAgent)) {
-    document.getElementById("setupText").textContent =
-      "Commonplace saves pages to Apple Notes, so it works only on a Mac.";
+    text.textContent = "Commonplace saves pages to Apple Notes, so it works only on a Mac.";
+  } else if (outdated) {
+    text.textContent = "This version of Commonplace needs a newer Commonplace Helper. Download the latest version, open it once, then try again.";
   }
 }
 
@@ -109,6 +117,7 @@ chrome.storage.local.get("stripQuery", (r) => {
   if (r.stripQuery !== undefined) els.stripQuery.checked = r.stripQuery;
 });
 
+chrome.storage.local.remove("notesCache"); // pre-protocol-2 cache format
 loadNotes(false);
 // Auto-focus comment field
 setTimeout(() => els.comment.focus(), 100);
@@ -118,15 +127,12 @@ setTimeout(() => els.comment.focus(), 100);
 // Show the cached list immediately, then always refresh it from Notes (~2s)
 // and rebuild the dropdowns without disturbing the current selection.
 async function loadNotes(forceRefresh) {
-  if (!forceRefresh && !allNotes.length) {
+  if (!forceRefresh && !library.notes.length) {
     const cached = await getCachedNotes();
-    if (cached) {
-      allNotes = cached;
-      buildFolders();
-    }
+    if (cached) setLibrary(cached, null);
   }
 
-  if (!allNotes.length) {
+  if (!library.notes.length) {
     setStatus("Loading notes…", "loading");
     els.folderSelect.innerHTML = '<option value="">Loading…</option>';
     els.noteSelect.innerHTML = '<option value="">Loading…</option>';
@@ -135,22 +141,37 @@ async function loadNotes(forceRefresh) {
 
   try {
     const response = await sendNative({ action: "list" });
-    const notes = response.notes || [];
-    await setCachedNotes(notes);
-    if (!allNotes.length || JSON.stringify(notes) !== JSON.stringify(allNotes)) {
-      const current = allNotes.length
+    const raw = response.notes;
+    await setCachedNotes(raw);
+    if (JSON.stringify(raw) !== libraryJSON) {
+      const current = library.notes.length
         ? { folder: els.folderSelect.value, noteId: els.noteSelect.value }
         : null;
-      allNotes = notes;
-      buildFolders(current);
+      setLibrary(raw, current);
     }
     if (els.status.textContent === "Loading notes…") setStatus("");
   } catch (e) {
-    if (e.needsSetup) showSetup();
+    if (e.needsSetup) showSetup(e.outdated);
     else setStatus("Error: " + e.message, "err");
   } finally {
     els.refresh.classList.remove("busy");
   }
+}
+
+// The helper sends a compact list: { prefixes, folders: [{id, name}],
+// notes: [[prefixIndex, idSuffix, name, folderIndex, modifiedSeconds]] }
+function setLibrary(raw, current) {
+  libraryJSON = JSON.stringify(raw);
+  library = {
+    folders: raw.folders,
+    notes: raw.notes.map(([prefix, suffix, name, folder, modified]) => ({
+      id: raw.prefixes[prefix] + suffix,
+      name,
+      folder: raw.folders[folder].id,
+      modified,
+    })),
+  };
+  buildFolders(current);
 }
 
 function getCachedNotes() {
@@ -171,25 +192,22 @@ function setCachedNotes(notes) {
 // -- Build folder dropdown -------------------------------------------------
 
 function buildFolders(current) {
-  // Group by folder, sort folders by most recent note (desc)
-  const folderMap = {};
-  for (const n of allNotes) {
-    const f = n.folder || "Notes";
-    if (!folderMap[f]) folderMap[f] = [];
-    folderMap[f].push(n);
+  // Folders that have notes, most recently modified first
+  const counts = {};
+  const latest = {};
+  for (const n of library.notes) {
+    counts[n.folder] = (counts[n.folder] || 0) + 1;
+    latest[n.folder] = Math.max(latest[n.folder] || 0, n.modified);
   }
-
-  const folderNames = Object.keys(folderMap).sort((a, b) => {
-    const latestA = Math.max(...folderMap[a].map((n) => new Date(n.modified).getTime()));
-    const latestB = Math.max(...folderMap[b].map((n) => new Date(n.modified).getTime()));
-    return latestB - latestA;
-  });
+  const folders = library.folders
+    .filter((f) => counts[f.id])
+    .sort((a, b) => latest[b.id] - latest[a.id]);
 
   els.folderSelect.innerHTML = "";
-  for (const name of folderNames) {
+  for (const f of folders) {
     const opt = document.createElement("option");
-    opt.value = name;
-    opt.textContent = `${name} (${folderMap[name].length})`;
+    opt.value = f.id;
+    opt.textContent = `${f.name} (${counts[f.id]})`;
     els.folderSelect.appendChild(opt);
   }
 
@@ -213,9 +231,9 @@ function selectFolder(folder, noteId) {
 
 function buildNotes(restoreNoteId) {
   const folder = els.folderSelect.value;
-  const notes = allNotes
-    .filter((n) => (n.folder || "Notes") === folder)
-    .sort((a, b) => new Date(b.modified).getTime() - new Date(a.modified).getTime());
+  const notes = library.notes
+    .filter((n) => n.folder === folder)
+    .sort((a, b) => b.modified - a.modified);
 
   els.noteSelect.disabled = false;
   els.noteSelect.innerHTML = "";
@@ -281,7 +299,7 @@ els.save.addEventListener("click", async () => {
     });
     setTimeout(() => window.close(), 800);
   } catch (e) {
-    if (e.needsSetup) showSetup();
+    if (e.needsSetup) showSetup(e.outdated);
     else setStatus(e.message, "err");
     els.save.disabled = false;
   }
