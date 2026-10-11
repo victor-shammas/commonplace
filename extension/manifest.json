@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA0gzq1hPioSeWem9httV8s4OiFmfEq5ap6DJNDuHohIKBcSlz5RqKrmUFHmJbML/evydNxbs1HvZIqu65kmQnW0t2lJGVb8o8pLr9MYn9taJBPKEmRfblpVs/70XgEAUPsPW7Ri8XBloThG831Tp4tP+nuIvKWlD8GoTOnvfbX98YkuzV2Do4B3K7uvlRKAUHb+NpvCdDu3wlaZk/MRtmDalbFUxbC3UyUJC6HivrwVHDf69KKFPonOHXdBqvpN/qQP5J2xf2mHpUzy4D8i8t2y8rzZA2JsN/18mAXzSbBKF/Po0gIMDCvC4/2Z7s1Rdf7HJmlqpQa1+jrdSuS9PqQwIDAQAB",
   "name": "Commonplace",
-  "version": "1.1",
+  "version": "1.0.0",
   "description": "Save pages to a running log in Apple Notes.",
   "permissions": ["activeTab", "nativeMessaging", "storage", "scripting"],
   "icons": {
