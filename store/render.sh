@@ -25,6 +25,8 @@ shoot() { # name width height scale
   --virtual-time-budget=5000 --window-size=340,504 --force-device-scale-factor=2 \
   --screenshot="$WORK/popup.png" "file://$WORK/popup.html" 2>/dev/null
 shoot screenshot 1280 800 1
+shoot screenshot-2 1280 800 1
+shoot screenshot-3 1280 800 1
 shoot promo-small 440 280 2
 shoot promo-marquee 1400 560 2
 
@@ -34,6 +36,8 @@ import sys
 from PIL import Image
 work = sys.argv[1]
 for src, dest, size in [("screenshot", "screenshot-1", (1280, 800)),
+                        ("screenshot-2", "screenshot-2", (1280, 800)),
+                        ("screenshot-3", "screenshot-3", (1280, 800)),
                         ("promo-small", "promo-small", (440, 280)),
                         ("promo-marquee", "promo-marquee", (1400, 560))]:
     Image.open(f"{work}/{src}.png").convert("RGB").resize(size, Image.LANCZOS).save(f"{dest}.png")
