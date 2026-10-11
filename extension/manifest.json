@@ -4,6 +4,7 @@
   "name": "Commonplace",
   "version": "1.0.0",
   "description": "Save pages to a running log in Apple Notes.",
+  "homepage_url": "https://victorshammas.com/commonplace/",
   "permissions": ["activeTab", "nativeMessaging", "storage", "scripting"],
   "icons": {
     "16": "icon16.png",
