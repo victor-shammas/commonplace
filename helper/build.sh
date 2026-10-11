@@ -3,7 +3,7 @@
 #
 #   ./build.sh               universal build, Developer ID signed, in helper/build/
 #   ./build.sh --notarize    also notarize and staple the app and the DMG; needs a
-#                            notarytool keychain profile (NOTARY_PROFILE, default "notary")
+#                            notarytool keychain profile (NOTARY_PROFILE, default "quoth-notary", shared with Quoth)
 #
 # Signing identity can be overridden with SIGN_IDENTITY.
 
@@ -15,7 +15,7 @@ BUILD_DIR="build"
 APP="$BUILD_DIR/$APP_NAME.app"
 DMG="$BUILD_DIR/CommonplaceHelper.dmg"
 IDENTITY="${SIGN_IDENTITY:-Developer ID Application: Victor Andreas Lund Shammas (JPP8RN6BJB)}"
-NOTARY_PROFILE="${NOTARY_PROFILE:-notary}"
+NOTARY_PROFILE="${NOTARY_PROFILE:-quoth-notary}"
 NOTARIZE=false
 [ "${1:-}" = "--notarize" ] && NOTARIZE=true
 
