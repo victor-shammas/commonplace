@@ -59,11 +59,12 @@ helper/                    Commonplace Helper (Swift package)
   Sources/SetupWindow.swift   Permissions setup UI
   build.sh                 Universal build, signing, DMG (--notarize to notarize)
 install.sh                 Development install to /Applications
+package.sh                 Store zip in dist/ (strips the manifest key)
 assets/                    Icon sources
 ```
 
 1. In `chrome://extensions/`, enable **Developer mode**, click **Load unpacked** and select `extension/`.
-2. Make sure the extension ID is listed in `helper/Sources/Registration.swift` (`extensionIDs`).
+2. The `key` in `manifest.json` gives the unpacked build the same ID as the Web Store item, which `helper/Sources/Registration.swift` allows.
 3. Run `./install.sh`. It builds and signs the helper, copies it to `/Applications` and registers it with every installed Chromium browser.
 4. Open Commonplace Helper once to grant permissions, then restart Chrome.
 

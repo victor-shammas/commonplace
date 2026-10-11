@@ -8,7 +8,8 @@ enum Registration {
 
     /// Extension IDs allowed to talk to the helper. Chrome doesn't accept wildcards.
     static let extensionIDs = [
-        "fanffalclaahkaadjbjdjlnkggpnnjlh", // unpacked development build
+        // Chrome Web Store ID. Unpacked dev builds get the same ID from the "key" in manifest.json.
+        "pckjhgfeeiebcdegmgnllooegobohcoc",
     ]
 
     /// Display name and directory under ~/Library/Application Support.

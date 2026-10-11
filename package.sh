@@ -10,6 +10,19 @@ ZIP="dist/commonplace-$VERSION.zip"
 
 mkdir -p dist
 rm -f "$ZIP"
-(cd extension && zip -qr -X "../$ZIP" . -x '.*' -x '*/.*' -x 'key.pem')
+
+# The manifest "key" only pins the unpacked dev build to the store's extension ID;
+# the store manages the key itself, so strip it from the upload.
+STAGING="$(mktemp -d)"
+trap 'rm -rf "$STAGING"' EXIT
+cp -R extension/ "$STAGING/"
+python3 - "$STAGING/manifest.json" <<'PY'
+import json, sys
+path = sys.argv[1]
+manifest = json.load(open(path))
+manifest.pop("key", None)
+open(path, "w").write(json.dumps(manifest, indent=2, ensure_ascii=False) + "\n")
+PY
+(cd "$STAGING" && zip -qr -X "$OLDPWD/$ZIP" . -x '.*' -x '*/.*')
 echo "✓ $ZIP"
 unzip -l "$ZIP"
