@@ -13,7 +13,7 @@ Download `CommonplaceHelper.dmg` from the [latest release](https://github.com/vi
 
 ### 2. Install the extension
 
-Install Commonplace from the Chrome Web Store, or load it unpacked (see Development).
+Install Commonplace from the [Chrome Web Store](https://chromewebstore.google.com/detail/commonplace/pckjhgfeeiebcdegmgnllooegobohcoc), or load it unpacked (see Development).
 
 ### 3. Restart Chrome
 

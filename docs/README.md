@@ -24,7 +24,7 @@ Served by GitHub Pages from the `main` branch, folder `/docs`. Push to `main` an
 
 ## Before and after launch
 
-- **Chrome Web Store link:** once the listing is live, replace the "Coming soon" span in `index.html` with the "Add to Chrome" link in the HTML comment above it (store ID `pckjhgfeeiebcdegmgnllooegobohcoc`), and link it from step 3 of "How do I install Commonplace?" in `support.html`. Also flip the Commonplace card's pill on `/apps/` (in `victor-shammas.github.io`, `static/apps/index.html`) from "Coming soon" to a Chrome Web Store link.
+- **Chrome Web Store link:** live since 12 October 2026 at https://chromewebstore.google.com/detail/commonplace/pckjhgfeeiebcdegmgnllooegobohcoc. The homepage CTA, setup step 3, support `#install` step 3 and the `/apps/` card all link to it.
 - **Privacy policy:** `privacy.html` is the text of `../PRIVACY.md`. If the policy changes, update both and the effective date.
 - **App bar:** all seven sites carry the same seven tiles in a 4 + 3 grid; keep them in step when tiles change.
 - After an icon change, regenerate `icon.png` (256 px), `favicon.png` (64 px, from the simplified small icon) and the opaque 180 px `apple-touch-icon.png` from `../assets/`.
