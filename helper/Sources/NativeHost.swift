@@ -166,8 +166,11 @@ enum NativeHost {
     static func writeMessage(_ object: [String: Any]) {
         guard let body = try? JSONSerialization.data(withJSONObject: object) else { return }
         var length = UInt32(body.count)
+        // Chrome may have closed the pipe already (e.g. the popup closed). The
+        // non-throwing write(_:) raises an uncatchable exception on EPIPE, so use
+        // the throwing one and drop the reply; ignore SIGPIPE so it can't kill us first.
+        signal(SIGPIPE, SIG_IGN)
         let output = FileHandle.standardOutput
-        output.write(Data(bytes: &length, count: 4))
-        output.write(body)
+        try? output.write(contentsOf: Data(bytes: &length, count: 4) + body)
     }
 }
