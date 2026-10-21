@@ -2,18 +2,22 @@
 
 A Chrome extension that keeps a commonplace book in Apple Notes. It saves the current page's title, URL, a timestamp and an optional comment to the end of any note you pick. It works through **Commonplace Helper**, a small signed Mac app that Chrome starts only while you save. There's no server, background process or open port.
 
+> **Commonplace is off the Chrome Web Store for now** (the account's limit of two listed extensions). It will be
+> back. Until then the helper isn't offered for download, since it does nothing without the extension; developers
+> can build and load both themselves (see Development).
+
 ## Setup
 
 ### 1. Install Commonplace Helper
 
-Download `CommonplaceHelper.dmg` from the [latest release](https://github.com/victor-shammas/commonplace/releases/latest) and drag **Commonplace Helper** to Applications. Open it once. It connects itself to your browsers and walks you through three macOS permissions:
+Install **Commonplace Helper** in Applications and open it once. It connects itself to your browsers and walks you through three macOS permissions:
 
 - **Notes**: to list your notes and open the one you pick
 - **System Events** and **Accessibility**: to paste the entry at the end of the note
 
 ### 2. Install the extension
 
-Install Commonplace from the [Chrome Web Store](https://chromewebstore.google.com/detail/commonplace/pckjhgfeeiebcdegmgnllooegobohcoc), or load it unpacked (see Development).
+Install Commonplace from the Chrome Web Store (when it's back), or load it unpacked (see Development).
 
 ### 3. Restart Chrome
 
